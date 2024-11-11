@@ -1,0 +1,14 @@
+ppo:
+  policy: 'CnnPolicy'      
+  learning_rate: 2.59251e-4
+  n_epochs: 3              
+  gamma: 0.908591          
+  ent_coef: 0.00105699     
+  batch_size: 64           
+  n_steps: 2048            
+  gae_lambda: 0.95         
+  clip_range: 0.2          
+  vf_coef: 0.5             
+  max_grad_norm: 0.5       
+  verbose: 1               
+  num_envs: 6              

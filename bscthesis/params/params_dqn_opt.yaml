@@ -1,0 +1,16 @@
+dqn:
+  policy: 'CnnPolicy'
+  learning_rate: 1.9070714918537712e-5
+  buffer_size: 50000
+  learning_starts: 100
+  batch_size: 77
+  tau: 1.0
+  gamma: 0.6371027666566412
+  train_freq: 3
+  gradient_steps: 10
+  target_update_interval: 10000
+  exploration_initial_eps: 1.0
+  exploration_final_eps: 0.05
+  exploration_fraction: 0.1
+  max_grad_norm: 10
+  verbose: 1
