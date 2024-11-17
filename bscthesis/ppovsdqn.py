@@ -28,7 +28,6 @@ def parse_arguments():
         help="Agent mode: choose between 'ppo' or 'dqn'."
     )
     
-    # Training mode arguments
     parser.add_argument(
         '--logdir',
         type=str,
@@ -60,21 +59,37 @@ def parse_arguments():
         help="Path to the YAML parameters configuration file."
     )
     
-    # Agent mode arguments
-    parser.add_argument(
-        '-v', '--video',
-        action='store_true',
-        help="Flag to save recorded footage as video."
-    )
     parser.add_argument(
         '--model',
         type=str,
         help="Path to the trained model to be used."
     )
+    parser.add_argument(
+        '-v', '--video',
+        type=str,
+        metavar='VIDEO_PATH',
+        help="Path and filename to save recorded footage as video (e.g., ./logs/dqn/video.mp4)."
+    )
+    parser.add_argument(
+        '-r', '--render',
+        action='store_true',
+        help="Enable rendering of the environment."
+    )
+    parser.add_argument(
+        '-e', '--episodes',
+        type=int,
+        default=10,
+        help="Number of episodes to run the inference for. Defaults to 10."
+    )
+    parser.add_argument(
+        '-d', '--delay',
+        type=float,
+        default=0.0,
+        help="Delay (in seconds) between each step. Defaults to 0.0."
+    )
     
     args = parser.parse_args()
     
-    # Validate arguments based on selected mode
     if args.train:
         required_train_args = ['logdir', 'modeldir', 'cycles', 'length', 'cfg', 'params']
         missing_args = [arg for arg in required_train_args if getattr(args, arg) is None]
@@ -104,7 +119,6 @@ def main():
         cfg = args.cfg
         params = args.params
         
-        # Validate paths
         if not os.path.exists(cfg):
             print(f"Error: ViZDoom config file '{cfg}' does not exist.")
             sys.exit(1)
@@ -124,7 +138,6 @@ def main():
                 print(f"Error creating model directory '{modeldir}': {e}")
                 sys.exit(1)
         
-        # Call the appropriate training function
         if agent_type == 'ppo':
             print("Starting PPO training...")
             train_ppo(
@@ -157,8 +170,10 @@ def main():
         model_path = args.model
         logdir = args.logdir
         video = args.video
+        episodes = args.episodes
+        delay = args.delay
+        render = args.render
         
-        # Validate paths
         if not os.path.exists(cfg):
             print(f"Error: ViZDoom config file '{cfg}' does not exist.")
             sys.exit(1)
@@ -172,14 +187,16 @@ def main():
                 print(f"Error creating log directory '{logdir}': {e}")
                 sys.exit(1)
         
-        # Call the appropriate agent function
         if agent_type == 'ppo':
             print("Running PPO agent...")
             agent_ppo(
                 cfg=cfg,
                 model=model_path,
                 logdir=logdir,
-                video=video
+                video=video,
+                episodes=episodes,
+                delay=delay,
+                render=render
             )
             print("PPO agent run completed.")
         elif agent_type == 'dqn':
@@ -188,7 +205,10 @@ def main():
                 cfg=cfg,
                 model=model_path,
                 logdir=logdir,
-                video=video
+                video=video,
+                episodes=episodes,
+                delay=delay,
+                render=render
             )
             print("DQN agent run completed.")
         else:
