@@ -2,6 +2,7 @@ import os
 import yaml
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv, VecFrameStack
 from typing import Callable
 from thesis.environments.vizdoom_env import VizDoomEnv
 
@@ -24,10 +25,11 @@ def train(logdir: str, modeldir: str, cycles: int, length: int, cfg: str, params
         params_config = yaml.safe_load(f)
     dqn_params = params_config.get('dqn', {})
 
-    env_callable = make_env(cfg)
-    env = env_callable()
+    env = DummyVecEnv([make_env(cfg)])
+#    env = VecFrameStack(env, n_stack=4)
 
-    # Initialize DQN with default params overwritten by config
+
+    # Default params
     model = DQN(
         policy=dqn_params.get('policy', 'CnnPolicy'),
         env=env,
@@ -48,7 +50,6 @@ def train(logdir: str, modeldir: str, cycles: int, length: int, cfg: str, params
         tensorboard_log=os.path.join(logdir, "tensorboard")
     )
 
-    # Training loop with saving at the end of each cycle
     for cycle in range(1, cycles + 1):
         print(f"Starting DQN training cycle {cycle}/{cycles}...")
         model.learn(

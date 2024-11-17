@@ -1,7 +1,7 @@
 import os
 import yaml
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecMonitor, VecTransposeImage
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecMonitor, VecTransposeImage, VecFrameStack
 from typing import Callable
 from thesis.environments.vizdoom_env import VizDoomEnv
 
@@ -10,7 +10,7 @@ def load_config(config_path: str) -> dict:
         config = yaml.safe_load(file)
     return config
 
-def make_env(vizdoom_config: str, rank: int = 0, seed: int = None) -> Callable:
+def make_env(vizdoom_config: str, rank: int = 0) -> Callable:
     def _init():
         env = VizDoomEnv(config_path=vizdoom_config, visibility=False)
         return env
@@ -30,9 +30,13 @@ def train(logdir: str, modeldir: str, cycles: int, length: int, cfg: str, params
         vec_env = DummyVecEnv(env_fns)
 
     vec_env = VecMonitor(vec_env)
+
     vec_env = VecTransposeImage(vec_env)
 
-    # Initialize PPO with default params overwritten by config
+#    frame_stack = 4
+#    vec_env = VecFrameStack(vec_env, n_stack=frame_stack)
+
+    # Default params
     model = PPO(
         policy=ppo_params.get('policy', 'CnnPolicy'),
         env=vec_env,
@@ -50,7 +54,6 @@ def train(logdir: str, modeldir: str, cycles: int, length: int, cfg: str, params
         tensorboard_log=os.path.join(logdir, "tensorboard")
     )
 
-    # Training loop with saving at the end of each cycle
     for cycle in range(1, cycles + 1):
         print(f"Starting PPO training cycle {cycle}/{cycles}...")
         model.learn(
