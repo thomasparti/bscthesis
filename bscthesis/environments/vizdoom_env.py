@@ -9,12 +9,14 @@ import time
 
 class VizDoomEnv(gym.Env):
 
-    def __init__(self, config_path: str, visibility: bool = True):
+    def __init__(self, config_path: str, visibility: bool = False, internalres: Optional[vzd.ScreenResolution] = None):
         super(VizDoomEnv, self).__init__()
 
         self.game = vzd.DoomGame()
         self.game.load_config(config_path)
         self.game.set_window_visible(visibility)
+        if internalres is not None:
+            self.game.set_screen_resolution(internalres)
         self.game.init()
 
         self.screen_height = self.game.get_screen_height()
