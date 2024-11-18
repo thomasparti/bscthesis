@@ -14,7 +14,8 @@ class VizDoomEnv(gym.Env):
         visibility: bool = False, 
         internalres: Optional[vzd.ScreenResolution] = None,
         obsx: int = 42,
-        obsy: int = 42
+        obsy: int = 42,
+        frame_skip: int = 2
     ):
         super(VizDoomEnv, self).__init__()
 
@@ -31,6 +32,7 @@ class VizDoomEnv(gym.Env):
 
         self.obsx = obsx
         self.obsy = obsy
+        self.frame_skip = frame_skip
 
         self._setup_action_space()
         self._setup_observation_space()
@@ -63,7 +65,7 @@ class VizDoomEnv(gym.Env):
     def step(self, action: int) -> Tuple[Any, float, bool, bool, dict]:
         action_tuple = self.actions[action]
 
-        reward = self.game.make_action(action_tuple)
+        reward = self.game.make_action(action_tuple, self.frame_skip)
         done = self.game.is_episode_finished()
         truncated = False
         info = {}
