@@ -8,8 +8,14 @@ import cv2
 import time
 
 class VizDoomEnv(gym.Env):
-
-    def __init__(self, config_path: str, visibility: bool = False, internalres: Optional[vzd.ScreenResolution] = None):
+    def __init__(
+        self, 
+        config_path: str, 
+        visibility: bool = False, 
+        internalres: Optional[vzd.ScreenResolution] = None,
+        obsx: int = 42,
+        obsy: int = 42
+    ):
         super(VizDoomEnv, self).__init__()
 
         self.game = vzd.DoomGame()
@@ -23,6 +29,9 @@ class VizDoomEnv(gym.Env):
         self.screen_width = self.game.get_screen_width()
         self.screen_channels = self.game.get_screen_channels()
 
+        self.obsx = obsx
+        self.obsy = obsy
+
         self._setup_action_space()
         self._setup_observation_space()
 
@@ -35,15 +44,12 @@ class VizDoomEnv(gym.Env):
         self.actions = np.identity(len(buttons), dtype=int)
 
     def _setup_observation_space(self):
-        state = self.game.get_state()
-        if state is not None and state.screen_buffer is not None:
-            screen = state.screen_buffer
-        else:
-            screen = np.zeros((self.screen_height, self.screen_width, self.screen_channels), dtype=np.uint8)
-
-        self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=(self.screen_height, self.screen_width, self.screen_channels),
-                                            dtype=np.uint8)
+        self.observation_space = spaces.Box(
+            low=0, 
+            high=255,
+            shape=(self.obsy, self.obsx, self.screen_channels),
+            dtype=np.uint8
+        )
 
     def process_observation(self, state):
         if state is None:
@@ -51,6 +57,7 @@ class VizDoomEnv(gym.Env):
         
         state = np.array(state.screen_buffer)
         state = np.transpose(state, (1, 2, 0))
+        state = cv2.resize(state, (self.obsx, self.obsy), interpolation=cv2.INTER_AREA)
         return state
 
     def step(self, action: int) -> Tuple[Any, float, bool, bool, dict]:
