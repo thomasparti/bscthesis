@@ -141,6 +141,21 @@ class VizDoomEnv(gym.Env):
             cv2.waitKey(1)
         return frame
 
+    def render_depth(self, scaling: float = 1.0, show: bool = False) -> np.ndarray:
+        state = self.game.get_state()
+        if state is not None and state.depth_buffer is not None:
+            frame = np.array(state.depth_buffer, dtype=np.uint8)
+        else:
+            frame = np.zeros((self.screen_height, self.screen_width), dtype=np.uint8)
+        if scaling != 1.0:
+            width = int(frame.shape[1] * scaling)
+            height = int(frame.shape[0] * scaling)
+            frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_LINEAR)
+        if show:
+            cv2.imshow("Depth Buffer", frame)
+            cv2.waitKey(1)
+        return frame
+
     def close(self):
         self.game.close()
         cv2.destroyAllWindows()
