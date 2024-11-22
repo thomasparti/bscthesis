@@ -6,9 +6,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from train.train_ppo import train as train_ppo
+from train.train_ppo_old import train as train_ppo
 from train.train_dqn import train as train_dqn
-from agents.agent_ppo import agent as agent_ppo
+from agents.agent_ppo_old import agent as agent_ppo
 from agents.agent_dqn import agent as agent_dqn
 
 def parse_arguments():
