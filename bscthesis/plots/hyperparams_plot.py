@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def generate_hyperparams_plot(data_dir, save_dir='images', save_name='hyperparams_comparison.png'):
+def generate_hyperparams_plot(data_dir, save_dir='images', save_name='ppovsdqn/hyperparams_comparison.png'):
     a2c_default = pd.read_csv(os.path.join(data_dir, 'hyperparams/A2C_default.csv'), sep=';')
     a2c_optimized = pd.read_csv(os.path.join(data_dir, 'hyperparams/A2C_optimized.csv'), sep=';')
     dqn_default = pd.read_csv(os.path.join(data_dir, 'hyperparams/DQN_default.csv'), sep=';')

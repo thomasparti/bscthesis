@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def generate_dqn_vs_dqn_opt_time_plot(data_dqn, data_dqn_opt, save_dir='images', save_name='dqn_vs_dqn_opt_bs_time.png'):
+def generate_dqn_vs_dqn_opt_time_plot(data_dqn, data_dqn_opt, save_dir='images', save_name='ppovsdqn/dqn_vs_dqn_opt_bs_time.png'):
     exact_performance_target = data_dqn_opt['Value'].max()
     initial_time_opt = data_dqn_opt['Wall time'].min()
     target_time_opt_exact = data_dqn_opt.loc[data_dqn_opt['Value'] == exact_performance_target, 'Wall time'].values[0]

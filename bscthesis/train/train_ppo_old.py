@@ -10,48 +10,33 @@ def load_config(config_path: str) -> dict:
         config = yaml.safe_load(file)
     return config
 
-def make_env(vizdoom_config: str, obsx: int, obsy: int, buffers: str, frameskip: int, rank: int = 0) -> Callable:
+def make_env(vizdoom_config: str, rank: int = 0) -> Callable:
     def _init():
-        env = VizDoomEnv(
-            config_path=vizdoom_config,
-            visibility=False,
-            obsx=obsx,
-            obsy=obsy,
-            buffers=buffers,
-            frame_skip=frameskip
-        )
+        env = VizDoomEnv(config_path=vizdoom_config, visibility=False)
         return env
     return _init
 
-def train(
-    logdir: str,
-    modeldir: str,
-    cycles: int,
-    length: int,
-    cfg: str,
-    params: str,
-    framestack: int,
-    obsx: int,
-    obsy: int,
-    buffers: str,
-    frameskip: int
-):
+def train(logdir: str, modeldir: str, cycles: int, length: int, cfg: str, params: str):
     with open(params, 'r') as f:
         params_config = yaml.safe_load(f)
     ppo_params = params_config.get('ppo', {})
+
     num_envs = ppo_params.get('num_envs', 4)
-    env_fns = [
-        make_env(cfg, obsx=obsx, obsy=obsy, buffers=buffers, frameskip=frameskip, rank=i)
-        for i in range(num_envs)
-    ]
+
+    env_fns = [make_env(cfg, rank=i) for i in range(num_envs)]
     if num_envs > 1:
         vec_env = SubprocVecEnv(env_fns)
     else:
         vec_env = DummyVecEnv(env_fns)
+
     vec_env = VecMonitor(vec_env)
+
     vec_env = VecTransposeImage(vec_env)
-    if framestack > 1:
-        vec_env = VecFrameStack(vec_env, n_stack=framestack)
+
+#    frame_stack = 4
+#    vec_env = VecFrameStack(vec_env, n_stack=frame_stack)
+
+    # Default params
     model = PPO(
         policy=ppo_params.get('policy', 'CnnPolicy'),
         env=vec_env,
@@ -68,13 +53,16 @@ def train(
         verbose=ppo_params.get('verbose', 1),
         tensorboard_log=os.path.join(logdir, "tensorboard")
     )
+
     for cycle in range(1, cycles + 1):
         print(f"Starting PPO training cycle {cycle}/{cycles}...")
         model.learn(
             total_timesteps=length,
             reset_num_timesteps=False
         )
+        
         cycle_model_path = os.path.join(modeldir, f'model_steps_{cycle * length}.zip')
         model.save(cycle_model_path)
         print(f"Completed PPO training cycle {cycle}/{cycles}. Model saved to {cycle_model_path}.")
+
     vec_env.close()
