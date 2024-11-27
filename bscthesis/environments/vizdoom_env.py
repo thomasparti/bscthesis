@@ -17,13 +17,17 @@ class VizDoomEnv(gym.Env):
         obsy: int = 42,
         frame_skip: int = 4,
         buffers: str = 'rd',
-        blind: bool = False
+        blind: bool = False,
+        clip: Optional[List[float]] = (-1, 1),
+        living_reward: float = -0.01
     ):
         super(VizDoomEnv, self).__init__()
 
         self.blind = blind
         self.game = vzd.DoomGame()
         self.game.load_config(config_path)
+        self.living_reward = living_reward
+        self.game.set_living_reward(self.living_reward)
         if internalres is not None:
             self.game.set_screen_resolution(internalres)
         self.game.set_window_visible(visibility)
@@ -46,6 +50,7 @@ class VizDoomEnv(gym.Env):
         self.obsx = obsx
         self.obsy = obsy
         self.frame_skip = frame_skip
+        self.clip = clip
 
         self._setup_action_space()
         self._setup_observation_space()
@@ -88,6 +93,9 @@ class VizDoomEnv(gym.Env):
     def step(self, action: int) -> Tuple[Any, float, bool, bool, dict]:
         action_tuple = self.actions[action]
         reward = self.game.make_action(action_tuple, self.frame_skip)
+        if self.clip:
+            reward = np.clip(reward, self.clip[0], self.clip[1])
+
         done = self.game.is_episode_finished()
         truncated = False
         info = {}
