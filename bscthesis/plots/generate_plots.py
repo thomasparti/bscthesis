@@ -4,7 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from thesis.plots.dqn_vs_dqn_opt_plots import generate_dqn_vs_dqn_opt_time_plot
 from thesis.plots.hyperparams_plot import generate_hyperparams_plot
-from thesis.plots.performance_plot import generate_perf_plot
+from thesis.plots.performance_plot import generate_perf_plot, generate_bar_plot
+from thesis.plots.maze_plot import generate_maze_plot
 
 
 def get_default_data_dir():
@@ -85,20 +86,14 @@ def create_resolution_plots():
     generate_perf_plot(data_dict, 'resolution/res_perf_smz.png', hue_name='Resolution', smoothing=0.95)
 
     data_dict_manual = {
-        'DTC': load_data_manual({
-            5292: 691.7424883842468,
-            12288: 730.4658715724945,
-            49152: 1060.582473039627,
-            196608: 2664.9017066955566
-        }),
-        'SMZ': load_data_manual({
+        'DTC and SMZ': load_data_manual({
          5292: 1300.1336085796356,
          12288: 1392.3371500968933,
          49152: 2073.02507519722,
          196608: 5975.747797727585
         }),
     }
-    generate_perf_plot(data_dict_manual, 'resolution/res_params_time.png', hue_name='Environment', xlabel='Number input of parameters', ylabel='Training time (seconds)', smoothing=0)
+    generate_perf_plot(data_dict_manual, 'resolution/res_params_time.png', hue_name=None, xlabel='Number input of parameters', ylabel='Training time (seconds)', smoothing=0)
 
     data_dict_manual = {
         'DTC and SMZ': load_data_manual({
@@ -108,7 +103,7 @@ def create_resolution_plots():
             196608: 298
         }),
     }
-    generate_perf_plot(data_dict_manual, 'resolution/res_params_size.png', hue_name='Environment', xlabel='Number input of parameters', ylabel='Model size (megabytes)', smoothing=0)
+    generate_perf_plot(data_dict_manual, 'resolution/res_params_size.png', hue_name=None, xlabel='Number input of parameters', ylabel='Model size (megabytes)', smoothing=0)
 
 
 def create_frameskip_plots():
@@ -219,6 +214,71 @@ def create_buffers_plots():
     }
     generate_perf_plot(data_dict, 'buffers/rgbd_smz.png', hue_name='Buffer', smoothing=0.9)
 
+def create_reward_shaping_plots():
+    data_dict = {
+        '-0.0001': load_data('rewshape/mwh_lr_00001.csv'),
+        '-0.001': load_data('rewshape/mwh_lr_0001.csv'),
+        '-0.01': load_data('rewshape/mwh_lr_001.csv'),
+        '-0.1': load_data('rewshape/mwh_lr_01.csv'),
+        '0': load_data('rewshape/mwh_nolr.csv'),
+    }
+    generate_perf_plot(data_dict, 'rewshape/mwh_rew_len.png', hue_name='Living reward', ylabel='Mean episode length', smoothing=0.8)
+
+def create_number_maps_plots():
+    data_dict_manual = {
+        'Map numbers': load_data_manual({
+         1: -7.8680699999999995,
+         3: -6.169309999999999,
+         5: -7.28041,
+         10: -7.878979999999999,
+         20: -9.031,
+        }),
+    }
+    generate_perf_plot(data_dict_manual, 'mapnumber/map_number_comp.png', hue_name=None, xlabel='Number of maps', ylabel='Mean performance', smoothing=0)
+
+def create_curr_learning_plots():
+
+    data_dict = {
+        'Default': load_data('texture/10x10x3.csv'),
+        'Randomized': load_data('texture/10x10x3_randomtextures.csv'),
+        'Adaptive': load_data('texture/10x10x3_adaptive.csv'),
+    }
+    generate_perf_plot(data_dict, 'texture/texture_perf.png', hue_name='Textures', smoothing=0.9)
+
+    data_dict_manual = {
+         'Default': -10.67477,
+         'Randomized': -8.56893,
+         'Adaptive': -7.68742,
+    }
+    generate_bar_plot(data_dict_manual, 'texture/texture_perf_bar.png', xlabel='Textures', ylabel='Mean performance')
+
+    data_dict = {
+        '10x10': load_data('size/10x10x3.csv'),
+        '20x20': load_data('size/20x20x3.csv'),
+        'Adaptive': load_data('size/adaptive_size.csv'),
+    }
+    generate_perf_plot(data_dict, 'size/size_perf.png', hue_name='Map sizes', smoothing=0.9)
+
+    data_dict_manual = {
+         '10x10': -11.902370000000001,
+         '20x20': -12.65466,
+         'Adaptive': -10.61442,
+    }
+    generate_bar_plot(data_dict_manual, 'size/size_perf_bar.png', xlabel='Map sizes', ylabel='Mean performance')
+
+def create_maze_plots():
+    maze1 = os.path.join(get_default_data_dir(), 'mazes/maze1.txt')
+    maze2 = os.path.join(get_default_data_dir(), 'mazes/maze2.txt')
+    maze3 = os.path.join(get_default_data_dir(), 'mazes/maze3.txt')
+    maze4 = os.path.join(get_default_data_dir(), 'mazes/maze4.txt')
+    maze5 = os.path.join(get_default_data_dir(), 'mazes/maze5.txt')
+    maze6 = os.path.join(get_default_data_dir(), 'mazes/maze6.txt')
+    generate_maze_plot(maze1, 'mazes/maze1.png')
+    generate_maze_plot(maze2, 'mazes/maze2.png')
+    generate_maze_plot(maze3, 'mazes/maze3.png')
+    generate_maze_plot(maze4, 'mazes/maze4.png')
+    generate_maze_plot(maze5, 'mazes/maze5.png')
+    generate_maze_plot(maze6, 'mazes/maze6.png')
 
 def main():
     create_dqn_vs_dqn_opt_plots()
@@ -229,7 +289,10 @@ def main():
     create_frameskip_plots()
     create_framestack_plots()
     create_buffers_plots()
-
+    create_reward_shaping_plots()
+    create_number_maps_plots()
+    create_curr_learning_plots()
+    create_maze_plots()
 
 if __name__ == '__main__':
     main()
