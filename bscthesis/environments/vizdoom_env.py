@@ -1,29 +1,39 @@
 import os
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, List
 import gymnasium as gym
 from gymnasium import spaces
 import vizdoom as vzd
 import numpy as np
 import cv2
 import time
+import random
+
 
 class VizDoomEnv(gym.Env):
     def __init__(
         self, 
         config_path: str, 
+        number_maps: int = 10,
+        reward_threshold: float = 0.6,
         visibility: bool = False, 
         internalres: Optional[vzd.ScreenResolution] = None,
         obsx: int = 42,
         obsy: int = 42,
         frame_skip: int = 4,
         buffers: str = 'rd',
-        blind: bool = False
+        blind: bool = False,
+        clip: Optional[List[float]] = (-1, 1),
+        living_reward: float = -0.01
     ):
         super(VizDoomEnv, self).__init__()
 
         self.blind = blind
         self.game = vzd.DoomGame()
         self.game.load_config(config_path)
+        self.living_reward = living_reward
+        self.game.set_living_reward(self.living_reward)
+        # Generated mazes start from map00 instead of map01
+        self.game.set_doom_map('map00')
         if internalres is not None:
             self.game.set_screen_resolution(internalres)
         self.game.set_window_visible(visibility)
@@ -46,6 +56,12 @@ class VizDoomEnv(gym.Env):
         self.obsx = obsx
         self.obsy = obsy
         self.frame_skip = frame_skip
+        self.clip = clip
+        self.number_maps = number_maps
+        self.reward_threshold = reward_threshold
+        self.episode_reward = 0.0
+        self.map_pool = 1
+        self.current_map_index = 0
 
         self._setup_action_space()
         self._setup_observation_space()
@@ -88,6 +104,11 @@ class VizDoomEnv(gym.Env):
     def step(self, action: int) -> Tuple[Any, float, bool, bool, dict]:
         action_tuple = self.actions[action]
         reward = self.game.make_action(action_tuple, self.frame_skip)
+        if self.clip:
+            reward = np.clip(reward, self.clip[0], self.clip[1])
+
+        self.episode_reward += reward
+
         done = self.game.is_episode_finished()
         truncated = False
         info = {}
@@ -97,6 +118,12 @@ class VizDoomEnv(gym.Env):
                 obs = self.process_observation(state)
             else:
                 obs = np.zeros(self.observation_space.shape, dtype=np.uint8)
+            
+            if self.episode_reward >= self.reward_threshold and self.current_map_index == self.map_pool - 1:
+                if self.map_pool < self.number_maps:
+                    self.map_pool += 1
+                    print(f"Reward threshold met! Increasing number of maps to {self.map_pool}.")
+            #print(f"Episode reward is {self.episode_reward}.")
         else:
             state = self.game.get_state()
             if state is not None and state.screen_buffer is not None:
@@ -106,14 +133,24 @@ class VizDoomEnv(gym.Env):
         return obs, reward, done, truncated, info
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[Any, dict]:
+        self.current_map_index = random.randint(0, self.map_pool - 1)
+        random_map_name = f"map{self.current_map_index:02}"  # Zero-padded map name (e.g., map00, map01)
+        self.game.set_doom_map(random_map_name)
+        #print(f"Randomly selected map: {random_map_name}")
+
         if seed is not None:
             self.game.set_seed(seed)
+
         self.game.new_episode()
         state = self.game.get_state()
+
+        self.episode_reward = 0.0
+
         if state is not None and state.screen_buffer is not None:
             obs = self.process_observation(state)
         else:
             obs = np.zeros(self.observation_space.shape, dtype=np.uint8)
+
         info = {}
         return obs, info
 

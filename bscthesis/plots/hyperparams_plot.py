@@ -26,8 +26,8 @@ def generate_hyperparams_plot(data_dir, save_dir='images', save_name='ppovsdqn/h
     plt.figure(figsize=(10, 6), dpi=300)
     sns.barplot(data=average_performance, x='Algorithm', y='Performance', hue='Hyperparameter', 
                 palette=color_map, edgecolor="black")
-    plt.xlabel("Algorithm", fontsize=14)
-    plt.ylabel("Performance", fontsize=14)
+    plt.xlabel("Algorithm", fontsize=16)
+    plt.ylabel("Performance", fontsize=16)
     plt.legend(title='Hyperparameter', loc='upper left')
     plt.tight_layout()
 
